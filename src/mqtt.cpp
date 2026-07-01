@@ -13,8 +13,17 @@
 PubSubClient client(espClient);
 
 CommandedValues commandedValues;
+ShowerBoostState showerBoostState;
 String TopicBuf;
 String PayloadBuf;
+static const char *ShowerBoostSetTopic = "cerasmarter/shower_boost/set";
+static const char *ShowerBoostStatusTopic = "cerasmarter/shower_boost/status";
+static const int ShowerBoostMinTemperature = 10;
+static const int ShowerBoostMaxTemperature = 60;
+static const int ShowerBoostDefaultTemperature = 50;
+static const int ShowerBoostDefaultRestoreTemperature = 10;
+static const int ShowerBoostMaxDuration = 1800;
+static const int ShowerBoostCommandIntervalMs = 5000;
 
 // \brief (Re)connect to MQTT broker
 void reconnectMqtt()
@@ -43,6 +52,7 @@ void reconnectMqtt()
       client.subscribe(configuration.Mqtt.Topics.StatusRequest);
       client.subscribe(configuration.Mqtt.Topics.Boost);
       client.subscribe(configuration.Mqtt.Topics.FastHeatup);
+      client.subscribe(ShowerBoostSetTopic);
       if (configuration.HomeAssistant.Enabled)
       {
         SetupAutodiscovery(HaSensorsFileName);
@@ -84,6 +94,149 @@ void setupMqttClient()
 String boolToString(bool src)
 {
   return (src) ? "true" : "false";
+}
+static void ClearShowerBoostError()
+{
+  showerBoostState.Error = false;
+  showerBoostState.LastError[0] = '\0';
+}
+
+static void SetShowerBoostError(const char *message)
+{
+  showerBoostState.Error = true;
+  strlcpy(showerBoostState.LastError, message, sizeof(showerBoostState.LastError));
+  PublishLog(message, __func__, LogLevel::Warn);
+}
+
+static int ClampInt(int value, int minValue, int maxValue)
+{
+  if (value < minValue)
+  {
+    return minValue;
+  }
+
+  if (value > maxValue)
+  {
+    return maxValue;
+  }
+
+  return value;
+}
+
+static void StartShowerBoost(int targetTemperature, int durationSeconds, int restoreTemperature)
+{
+  ClearShowerBoostError();
+  showerBoostState.Active = true;
+  showerBoostState.RestorePending = false;
+  showerBoostState.RestoreCommandSent = false;
+  showerBoostState.RefreshRequested = true;
+  showerBoostState.TargetTemperature = targetTemperature;
+  showerBoostState.RestoreTemperature = restoreTemperature;
+  showerBoostState.DurationSeconds = durationSeconds;
+  showerBoostState.RemainingSeconds = durationSeconds;
+  showerBoostState.PreviousSetpoint = (int)round(ceraValues.Hotwater.SetPoint);
+  showerBoostState.LastCommandMillis = 0L;
+  PublishLog("Shower boost started", __func__, LogLevel::Info);
+}
+
+void PublishShowerBoostStatus()
+{
+  if (!client.connected())
+  {
+    return;
+  }
+
+  StaticJsonDocument<384> doc;
+  doc["active"] = boolToString(showerBoostState.Active);
+  doc["restore_pending"] = boolToString(showerBoostState.RestorePending);
+  doc["restore_command_sent"] = boolToString(showerBoostState.RestoreCommandSent);
+  doc["target_temperature"] = showerBoostState.TargetTemperature;
+  doc["restore_temperature"] = showerBoostState.RestoreTemperature;
+  doc["duration"] = showerBoostState.DurationSeconds;
+  doc["remaining"] = showerBoostState.RemainingSeconds;
+  doc["previous_setpoint"] = showerBoostState.PreviousSetpoint;
+  doc["current_setpoint"] = ceraValues.Hotwater.SetPoint;
+  doc["maximum_temperature"] = ceraValues.Hotwater.MaximumTemperature;
+  doc["error"] = showerBoostState.LastError;
+
+  char buffer[512];
+  size_t n = serializeJson(doc, buffer);
+  client.publish(ShowerBoostStatusTopic, buffer, n);
+}
+
+void TickShowerBoost()
+{
+  if (!showerBoostState.Active)
+  {
+    return;
+  }
+
+  if (showerBoostState.RemainingSeconds > 0)
+  {
+    showerBoostState.RemainingSeconds--;
+  }
+
+  if (showerBoostState.RemainingSeconds == 0)
+  {
+    showerBoostState.Active = false;
+    showerBoostState.RestorePending = true;
+    showerBoostState.RestoreCommandSent = false;
+    showerBoostState.LastCommandMillis = 0L;
+    PublishLog("Shower boost expired; restoring hot water setpoint", __func__, LogLevel::Info);
+  }
+}
+
+void DriveShowerBoost()
+{
+  if (!showerBoostState.Active && !showerBoostState.RestorePending)
+  {
+    return;
+  }
+
+  const int currentSetpoint = (int)round(ceraValues.Hotwater.SetPoint);
+  const int desiredSetpoint = showerBoostState.Active ? showerBoostState.TargetTemperature : showerBoostState.RestoreTemperature;
+
+  if (showerBoostState.RestorePending && showerBoostState.RestoreCommandSent && currentSetpoint == desiredSetpoint)
+  {
+    showerBoostState.RestorePending = false;
+    ClearShowerBoostError();
+    PublishLog("Shower boost restore completed", __func__, LogLevel::Info);
+    return;
+  }
+
+  if (showerBoostState.Active && currentSetpoint == desiredSetpoint && !showerBoostState.RefreshRequested)
+  {
+    return;
+  }
+
+  const unsigned long now = millis();
+  if (now - lastSentMessageTime < 1000 ||
+      (!showerBoostState.RefreshRequested && now - showerBoostState.LastCommandMillis < ShowerBoostCommandIntervalMs))
+  {
+    return;
+  }
+
+  if (!SendHotWaterSetpointMessage(desiredSetpoint))
+  {
+    SetShowerBoostError("Shower boost could not send hot water setpoint");
+    return;
+  }
+
+  ClearShowerBoostError();
+  showerBoostState.LastCommandMillis = now;
+  showerBoostState.RefreshRequested = false;
+  if (showerBoostState.RestorePending)
+  {
+    showerBoostState.RestoreCommandSent = true;
+  }
+}
+
+void RequestShowerBoostSetpointRefresh(int observedTemperature)
+{
+  if (showerBoostState.Active && observedTemperature != showerBoostState.TargetTemperature)
+  {
+    showerBoostState.RefreshRequested = true;
+  }
 }
 
 // Callback for MQTT subscribed topics
@@ -263,33 +416,83 @@ void callback(char *topic, byte *payload, unsigned int length)
       commandedValues.Heating.OverrideSetpoint = doc["OverrideSetpoint"];
     if (!doc["OnDemandBoostDuration"].isNull())
       commandedValues.Heating.BoostDuration = doc["OnDemandBoostDuration"];
-
-    // Receiving Water Parameters
-    if (strcmp(topic, configuration.Mqtt.Topics.WaterParameters) == 0)
-    {
-
-      /*
-      Example Json:
-      {
-        "Setpoint": 40
-      }
-      */
-
-      const int docSize = 16;
-      StaticJsonDocument<docSize> doc;
-      DeserializationError error = deserializeJson(doc, (char *)payload, length);
-
-      if (error)
-      {
-        Log.printf("[Water Parameters] Error Processing JSON: %payloadBuf\r\n", error.c_str());
-        return;
-      }
-
-      if (!doc["Setpoint"].isNull())
-        commandedValues.HotWater.SetPoint = doc["Setpoint"]; // 22.1
-    }
   }
 
+  // Receiving Water Parameters
+  if (strcmp(topic, configuration.Mqtt.Topics.WaterParameters) == 0)
+  {
+    /*
+    Example Json:
+    {
+      "Setpoint": 40
+    }
+    */
+
+    const int docSize = 16;
+    StaticJsonDocument<docSize> doc;
+    DeserializationError error = deserializeJson(doc, (char *)payload, length);
+
+    if (error)
+    {
+      Log.printf("[Water Parameters] Error Processing JSON: %payloadBuf\r\n", error.c_str());
+      return;
+    }
+
+    if (!doc["Setpoint"].isNull())
+      commandedValues.HotWater.SetPoint = doc["Setpoint"]; // 22.1
+  }
+
+  if (strcmp(topic, ShowerBoostSetTopic) == 0)
+  {
+#if READ_ONLY == 1 && ALLOW_SHOWER_BOOST_WRITE != 1
+    SetShowerBoostError("Build blocks shower boost CAN writes");
+    PublishShowerBoostStatus();
+    return;
+#endif
+
+    const int docSize = 192;
+    StaticJsonDocument<docSize> doc;
+    DeserializationError error = deserializeJson(doc, (char *)payload, length);
+
+    if (error)
+    {
+      SetShowerBoostError("Invalid shower boost JSON");
+      PublishShowerBoostStatus();
+      return;
+    }
+
+    if (!doc["cancel"].isNull() && doc["cancel"].as<bool>())
+    {
+      ClearShowerBoostError();
+      showerBoostState.Active = false;
+      showerBoostState.RestorePending = true;
+      showerBoostState.RestoreCommandSent = false;
+      showerBoostState.RefreshRequested = false;
+      showerBoostState.RemainingSeconds = 0;
+      showerBoostState.LastCommandMillis = 0L;
+      PublishLog("Shower boost cancelled; restoring hot water setpoint", __func__, LogLevel::Info);
+      PublishShowerBoostStatus();
+      return;
+    }
+
+    const int targetTemperature = ClampInt(doc["target_temperature"] | ShowerBoostDefaultTemperature, ShowerBoostMinTemperature, ShowerBoostMaxTemperature);
+    const int durationSeconds = ClampInt(doc["duration"] | ShowerBoostMaxDuration, 1, ShowerBoostMaxDuration);
+    const int restoreTemperature = ClampInt(doc["restore_temperature"] | ShowerBoostDefaultRestoreTemperature, 10, ShowerBoostMaxTemperature);
+    const int maximumTemperature = (int)round(ceraValues.Hotwater.MaximumTemperature);
+
+    // This installation reports a physical maximum of 59 °C although the
+    // controller's nominal upper selection is 60 °C. Permit that one-degree
+    // representation difference, but continue rejecting larger requests.
+    if (maximumTemperature > 0 && targetTemperature > maximumTemperature + 1)
+    {
+      SetShowerBoostError("Target temperature exceeds observed hot water maximum");
+      PublishShowerBoostStatus();
+      return;
+    }
+
+    StartShowerBoost(targetTemperature, durationSeconds, restoreTemperature);
+    PublishShowerBoostStatus();
+  }
   // On-Demand Boost
   if (strcmp(topic, configuration.Mqtt.Topics.Boost) == 0)
   {
@@ -378,7 +581,12 @@ void PublishHeatingTemperaturesAndStatus()
 
   jsonObj["FeedMaximum"] = ceraValues.Heating.FeedMaximum;
   jsonObj["FeedCurrent"] = ceraValues.Heating.FeedCurrent;
+#if READ_ONLY == 1
+  // A passive monitor must always report the setpoint observed on CAN.
+  jsonObj["FeedSetpoint"] = ceraValues.Heating.FeedSetpoint;
+#else
   jsonObj["FeedSetpoint"] = (OverrideControl) ? commandedValues.Heating.CalculatedFeedSetpoint : ceraValues.Heating.FeedSetpoint;
+#endif
   jsonObj["Outside"] = ceraValues.General.OutsideTemperature;
   jsonObj["Pump"] = boolToString(ceraValues.Heating.PumpActive);
   jsonObj["Season"] = boolToString(ceraValues.Heating.Season);
@@ -433,7 +641,13 @@ void PublishWaterTemperatures()
 
   jsonObj["Maximum"] = ceraValues.Hotwater.MaximumTemperature;
   jsonObj["Current"] = ceraValues.Hotwater.TemperatureCurrent;
-  jsonObj["Setpoint"] = ceraValues.Hotwater.SetPoint;
+  const double effectiveSetpoint = showerBoostState.Active
+                                       ? showerBoostState.TargetTemperature
+                                       : (showerBoostState.RestorePending
+                                              ? showerBoostState.RestoreTemperature
+                                              : ceraValues.Hotwater.SetPoint);
+  jsonObj["Setpoint"] = effectiveSetpoint;
+  jsonObj["ControllerSetpoint"] = ceraValues.Hotwater.SetPoint;
   jsonObj["CFSetpoint"] = ceraValues.Hotwater.ContinousFlowSetpoint;
   jsonObj["Now"] = boolToString(ceraValues.Hotwater.Now);
   jsonObj["Buffer"] = boolToString(ceraValues.Hotwater.BufferMode);
@@ -530,3 +744,7 @@ void ShowActivityLed()
     xTaskCreate(ShowMqttActivity, "MQTT Activity", 2000, NULL, 1, &MqttActivityHandle);
   }
 }
+
+
+
+

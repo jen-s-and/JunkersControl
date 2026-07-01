@@ -194,6 +194,9 @@ void loop()
   client.loop();
   // Process incoming CAN messages
   processCan();
+  // Keep a temporary DHW setpoint authoritative when the TA250 repeats its
+  // own stored value. The function is idle when no time control is active.
+  DriveShowerBoost();
   // Telnet Communication
   CheckForConnections();
   // Read Telnet commands
@@ -208,10 +211,11 @@ void loop()
   {
     // Ensure that we are connected to MQTT
     reconnectMqtt();
+    TickShowerBoost();
 
     // If we didn't spot a controller message on the network for x seconds we will take over control.
     // As soon as a message is spotted on the network it will be disabled again. This is controlled within processCan()
-    if (currentMillis - controllerMessageTimer >= configuration.General.BusMessageTimeout * 1000)
+    if (READ_ONLY != 1 && currentMillis - controllerMessageTimer >= configuration.General.BusMessageTimeout * 1000)
     {
       // Bail out if we already set this...
       if (!OverrideControl)
@@ -338,6 +342,8 @@ void loop()
     // Publish Water Temperatures
     if (configuration.Features.WaterParameters)
       PublishWaterTemperatures();
+
+    PublishShowerBoostStatus();
   }
 
   //——————————————————————————————————————————————————————————————————————————————
@@ -415,45 +421,79 @@ void Reboot()
   ESP.restart();
 }
 
-void SendMessage(CANMessage msg)
+static bool TrySendCanMessage(CANMessage msg, bool requireOverride, bool allowReadOnlyWrite)
 {
-  // Send message if not empty and override is true.
-  if (msg.id != 0 && OverrideControl)
+#if READ_ONLY == 1
+  if (!allowReadOnlyWrite || ALLOW_SHOWER_BOOST_WRITE != 1)
   {
-    if (configuration.General.Debug)
-    {
-      Log.printf("DEBUG STEP CHAIN #%i: Sending CAN Message\r\n", currentStep);
-      WriteMessage(msg, false);
-    }
-    if (!can.tryToSend(msg))
-    {
-      CanSendErrorCount++;
-      if (CanErrorActivityHandle == NULL)
-      {
-        xTaskCreate(ShowCanError, "Can Error", 2000, NULL, 1, &CanErrorActivityHandle);
-      }
-      Log.printf("\e[0;31[%s] Failed to send message [0x%.3X] over CAN. This has happened %i times before in a row.\r\n\e[0m", myTZ.dateTime("d-M-y H:i:s.v").c_str(), msg.id, CanSendErrorCount);
-      char logMsg[64];
-      sprintf(logMsg, "CAN send error msg id [0x%.3X]. Err Count: %i", msg.id, CanSendErrorCount);
-      PublishLog(logMsg, __func__, LogLevel::Error);
-    }
-    else
-    {
-
-      if (CanErrorActivityHandle != NULL)
-      {
-        vTaskDelete(CanErrorActivityHandle);
-        CanErrorActivityHandle = NULL;
-
-        PublishLog("CAN send error CLEARED", __func__, LogLevel::Info);
-        Log.printf("\e[0;32[%s] CAN send error CLEARED after %i previously failed attempts.\r\n\e[0m", myTZ.dateTime("d-M-y H:i:s.v").c_str(), CanSendErrorCount);
-        CanSendErrorCount = 0;
-      }
-    }
-    lastSentMessageTime = millis();
+    return false;
   }
+#endif
+
+  if (msg.id == 0)
+  {
+    return false;
+  }
+
+  if (requireOverride && !OverrideControl)
+  {
+    return false;
+  }
+
+  if (configuration.General.Debug)
+  {
+    Log.printf("DEBUG STEP CHAIN #%i: Sending CAN Message\r\n", currentStep);
+    WriteMessage(msg, false);
+  }
+
+  if (!can.tryToSend(msg))
+  {
+    CanSendErrorCount++;
+    if (CanErrorActivityHandle == NULL)
+    {
+      xTaskCreate(ShowCanError, "Can Error", 2000, NULL, 1, &CanErrorActivityHandle);
+    }
+    Log.printf("\e[0;31[%s] Failed to send message [0x%.3X] over CAN. This has happened %i times before in a row.\r\n\e[0m", myTZ.dateTime("d-M-y H:i:s.v").c_str(), msg.id, CanSendErrorCount);
+    char logMsg[64];
+    sprintf(logMsg, "CAN send error msg id [0x%.3X]. Err Count: %i", msg.id, CanSendErrorCount);
+    PublishLog(logMsg, __func__, LogLevel::Error);
+    return false;
+  }
+
+  if (CanErrorActivityHandle != NULL)
+  {
+    vTaskDelete(CanErrorActivityHandle);
+    CanErrorActivityHandle = NULL;
+
+    PublishLog("CAN send error CLEARED", __func__, LogLevel::Info);
+    Log.printf("\e[0;32[%s] CAN send error CLEARED after %i previously failed attempts.\r\n\e[0m", myTZ.dateTime("d-M-y H:i:s.v").c_str(), CanSendErrorCount);
+    CanSendErrorCount = 0;
+  }
+
+  lastSentMessageTime = millis();
+  return true;
 }
 
+bool SendHotWaterSetpointMessage(int temperatureCelsius)
+{
+  if (temperatureCelsius < 0 || temperatureCelsius > 100)
+  {
+    return false;
+  }
+
+  // The address behind SetpointTemperature is the one verified by changing
+  // the DHW target at the TA250 (0x255 on this installation). The separate
+  // continuous-flow address is intentionally not written.
+  const uint16_t setpointId = configuration.CanAddresses.HotWater.SetpointTemperature;
+  CANMessage msg = PrepareMessage(setpointId, 1);
+  msg.data[0] = temperatureCelsius * 2;
+  return TrySendCanMessage(msg, false, true);
+}
+
+void SendMessage(CANMessage msg)
+{
+  (void)TrySendCanMessage(msg, true, false);
+}
 void WriteMessage(CANMessage msg, bool received /* = true */)
 {
   // Buffer for storing the formatted values. We have to expect 'FF (255)' which is 8 bytes + 1 for string overhead \0
@@ -651,3 +691,6 @@ void TrackBoostFunction(void *pvParameter)
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
 }
+
+
+

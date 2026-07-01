@@ -31,6 +31,18 @@
 #define MUTE_MQTT 0
 #endif
 
+// Hard safety switch for passive monitoring builds.
+// When enabled, SendMessage drops every outgoing CAN frame.
+#ifndef READ_ONLY
+#define READ_ONLY 0
+#endif
+
+// Allow the dedicated shower boost feature to send only the hot-water
+// setpoint frame even in monitoring builds.
+#ifndef ALLOW_SHOWER_BOOST_WRITE
+#define ALLOW_SHOWER_BOOST_WRITE 0
+#endif
+
 // Environment
 #ifndef ENV
 #define ENV "NOT_SET"
@@ -47,6 +59,7 @@
 
 
 extern void SendMessage(CANMessage msg);
+extern bool SendHotWaterSetpointMessage(int temperatureCelsius);
 extern void SetDateTime();
 extern void Reboot();
 extern CANMessage PrepareMessage(uint32_t id, int length = 8);

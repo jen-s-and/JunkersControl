@@ -70,6 +70,24 @@ extern CommandedValues commandedValues;
 extern String TopicBuf;
 extern String PayloadBuf;
 
+struct ShowerBoostState
+{
+    bool Active = false;
+    bool RestorePending = false;
+    bool RestoreCommandSent = false;
+    bool RefreshRequested = false;
+    bool Error = false;
+    int TargetTemperature = 50;
+    int RestoreTemperature = 10;
+    int DurationSeconds = 1800;
+    int RemainingSeconds = 0;
+    int PreviousSetpoint = 10;
+    unsigned long LastCommandMillis = 0L;
+    char LastError[96] = "";
+};
+
+extern ShowerBoostState showerBoostState;
+
 enum LogLevel
 {
     Error,
@@ -91,8 +109,13 @@ extern void PublishStatus();
 extern void PublishHeatingTemperaturesAndStatus();
 extern void PublishWaterTemperatures();
 extern void PublishAuxiliaryTemperatures();
+extern void PublishShowerBoostStatus();
+extern void TickShowerBoost();
+extern void DriveShowerBoost();
+extern void RequestShowerBoostSetpointRefresh(int observedTemperature);
 extern void ShowActivityLed();
 extern String boolToString(bool src);
 extern void PublishLog(const char *msg, const char *func, LogLevel level);
 
 #endif
+

@@ -107,14 +107,13 @@ void processCan()
     {
       controllerMessageTimer = curMillis;
 
-      // Bail out if we're already disabled.
-      if (!OverrideControl)
-        return;
-
-      // Switch off override if another controller sends messages on the network.
-      OverrideControl = false;
-
-      Log.println("Detected another controller on the network. Disabling Override");
+      // Always continue parsing controller frames. Returning here discarded the
+      // measured values whenever override was already disabled.
+      if (OverrideControl)
+      {
+        OverrideControl = false;
+        Log.println("Detected another controller on the network. Disabling Override");
+      }
     }
 
     /*************************************
@@ -297,6 +296,7 @@ void processCan()
     {
       temp = Message.data[0] / 2.0;
       ceraValues.Hotwater.SetPoint = temp;
+      RequestShowerBoostSetpointRefresh((int)round(temp));
     }
 
     //[DHW] - [RC] - "Hot Water Now" (Warmwasser SOFORT in German)
