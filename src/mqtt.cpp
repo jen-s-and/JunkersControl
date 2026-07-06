@@ -439,7 +439,10 @@ void callback(char *topic, byte *payload, unsigned int length)
     }
 
     if (!doc["Setpoint"].isNull())
+    {
       commandedValues.HotWater.SetPoint = doc["Setpoint"]; // 22.1
+      commandedValues.HotWater.SetPointReceived = true;
+    }
   }
 
   if (strcmp(topic, ShowerBoostSetTopic) == 0)

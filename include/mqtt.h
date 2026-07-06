@@ -61,7 +61,8 @@ struct CommandedValues
     struct HotWater_
     {
         //-- Setpoint (Target Temperature) for DHW
-        int SetPoint = 40.0F;
+        int SetPoint = 10;
+        bool SetPointReceived = false;
     } HotWater;
 
 };

@@ -197,6 +197,14 @@ void loop()
   // Keep a temporary DHW setpoint authoritative when the TA250 repeats its
   // own stored value. The function is idle when no time control is active.
   DriveShowerBoost();
+#if ALLOW_TA250_IDLE_PROBE == 1
+  TickTa250IdleProbe();
+#elif ALLOW_TA250_HEARTBEAT_PROBE == 1
+  runEverySeconds(30)
+  {
+    SendTa250HeartbeatProbeMessage();
+  }
+#endif
   // Telnet Communication
   CheckForConnections();
   // Read Telnet commands
@@ -230,6 +238,7 @@ void loop()
   // Control Actions
   //——————————————————————————————————————————————————————————————————————————————
 
+#if ALLOW_TA250_IDLE_PROBE != 1
   // TODO: Seek for a more elegant solution to send each message every 30 seconds. Right now it's 5 because we have 6 Steps and we want an interval of 30 seconds so 30/6 = 5 seconds delay.
   runEverySeconds(5)
   {
@@ -318,6 +327,8 @@ void loop()
       SendMessage(msg);
     }
   }
+
+#endif
 
   //——————————————————————————————————————————————————————————————————————————————
   // Actions performed every five seconds
@@ -424,7 +435,32 @@ void Reboot()
 static bool TrySendCanMessage(CANMessage msg, bool requireOverride, bool allowReadOnlyWrite)
 {
 #if READ_ONLY == 1
-  if (!allowReadOnlyWrite || ALLOW_SHOWER_BOOST_WRITE != 1)
+  if (!allowReadOnlyWrite)
+  {
+    return false;
+  }
+
+  bool readOnlyWriteAllowed = false;
+#if ALLOW_SHOWER_BOOST_WRITE == 1
+  readOnlyWriteAllowed = readOnlyWriteAllowed ||
+                         (msg.id == configuration.CanAddresses.HotWater.SetpointTemperature && msg.len == 1);
+#endif
+#if ALLOW_TA250_HEARTBEAT_PROBE == 1
+  readOnlyWriteAllowed = readOnlyWriteAllowed || (msg.id == 0x0F9 && msg.len == 0);
+#endif
+#if ALLOW_TA250_IDLE_PROBE == 1
+  readOnlyWriteAllowed = readOnlyWriteAllowed ||
+                         (msg.id == 0x0F9 && msg.len == 0) ||
+                         (msg.id == configuration.CanAddresses.Heating.FeedSetpoint && msg.len == 1) ||
+                         (msg.id == configuration.CanAddresses.Heating.Operation && msg.len == 1) ||
+                         (msg.id == configuration.CanAddresses.Heating.Economy && msg.len == 1) ||
+                         (msg.id == configuration.CanAddresses.HotWater.BufferOperation && msg.len == 1) ||
+                         (msg.id == configuration.CanAddresses.HotWater.SetpointTemperature && msg.len == 1) ||
+                         (msg.id == configuration.CanAddresses.General.DateTime && msg.len == 4) ||
+                         (msg.id == configuration.CanAddresses.Heating.Mode && msg.len == 1);
+#endif
+
+  if (!readOnlyWriteAllowed)
   {
     return false;
   }
@@ -490,6 +526,149 @@ bool SendHotWaterSetpointMessage(int temperatureCelsius)
   return TrySendCanMessage(msg, false, true);
 }
 
+bool SendTa250HeartbeatProbeMessage()
+{
+#if ALLOW_TA250_HEARTBEAT_PROBE != 1
+  return false;
+#else
+  // TA250 heartbeat candidate, observed locally in docs/can_logs as 0x0F9/DLC0
+  // roughly every 30 seconds while the TA250 was connected. This probe sends no
+  // status, setpoint, warm-water, or heating-control payload.
+  CANMessage msg = PrepareMessage(0x0F9, 0);
+  if (configuration.General.Debug)
+  {
+    Log.println("TA250 heartbeat probe: sending 0x0F9 DLC0");
+  }
+  return TrySendCanMessage(msg, false, true);
+#endif
+}
+
+static int ClampProbeTemperature(double value, int minValue, int maxValue)
+{
+  if (value < minValue)
+  {
+    return minValue;
+  }
+  if (value > maxValue)
+  {
+    return maxValue;
+  }
+  return (int)round(value);
+}
+
+static int GetTa250IdleFeedSetpointRaw()
+{
+  const int minimumFeed = ClampProbeTemperature(ceraValues.Heating.FeedMinimum, 10, 90);
+
+  if (!ceraValues.Heating.Season || !commandedValues.Heating.Active)
+  {
+    commandedValues.Heating.CalculatedFeedSetpoint = minimumFeed;
+    return ConvertFeedTemperature(minimumFeed);
+  }
+
+  double desiredFeed = CalculateFeedTemperature();
+  desiredFeed = ClampProbeTemperature(desiredFeed, minimumFeed, ClampProbeTemperature(ceraValues.Heating.FeedMaximum, minimumFeed, 90));
+  commandedValues.Heating.CalculatedFeedSetpoint = desiredFeed;
+  return ConvertFeedTemperature(desiredFeed);
+}
+
+static int GetTa250IdleHotWaterSetpointRaw()
+{
+  int desiredSetpoint = commandedValues.HotWater.SetPointReceived ? commandedValues.HotWater.SetPoint : 10;
+
+  if (showerBoostState.Active)
+  {
+    desiredSetpoint = showerBoostState.TargetTemperature;
+  }
+  else if (showerBoostState.RestorePending)
+  {
+    desiredSetpoint = showerBoostState.RestoreTemperature;
+  }
+
+  return ClampProbeTemperature(desiredSetpoint, 10, 80) * 2;
+}
+
+static bool SendTa250IdleProbePayload(uint32_t id, uint8_t len, const uint8_t *payload)
+{
+#if ALLOW_TA250_IDLE_PROBE != 1
+  return false;
+#else
+  CANMessage msg = PrepareMessage(id, len);
+  for (uint8_t i = 0; i < len; i++)
+  {
+    msg.data[i] = payload[i];
+  }
+  return TrySendCanMessage(msg, false, true);
+#endif
+}
+
+static bool SendTa250IdleProbeByte(uint32_t id, uint8_t value)
+{
+  uint8_t payload[1] = {value};
+  return SendTa250IdleProbePayload(id, 1, payload);
+}
+
+static bool SendTa250IdleProbeDateTime()
+{
+  if (!TimeIsSynced())
+  {
+    return false;
+  }
+
+  uint8_t payload[4] = {
+      (uint8_t)myTZ.dateTime("N").toInt(),
+      (uint8_t)myTZ.hour(),
+      (uint8_t)myTZ.minute(),
+      4};
+  return SendTa250IdleProbePayload(configuration.CanAddresses.General.DateTime, 4, payload);
+}
+
+void TickTa250IdleProbe()
+{
+#if ALLOW_TA250_IDLE_PROBE == 1
+  runEverySeconds(1)
+  {
+    const uint32_t second = millis() / 1000;
+    const uint8_t phase30 = second % 30;
+    const uint8_t phase60 = second % 60;
+
+    if (phase60 == 14)
+    {
+      SendTa250IdleProbeByte(configuration.CanAddresses.Heating.Mode, 1);
+    }
+    else if (phase60 == 17)
+    {
+      SendTa250IdleProbeDateTime();
+    }
+    else if (phase30 == 19)
+    {
+      const uint8_t economy = (!ceraValues.Heating.Season || !commandedValues.Heating.Active) ? 1 : 0;
+      SendTa250IdleProbeByte(configuration.CanAddresses.Heating.Economy, economy);
+    }
+    else if (phase30 == 21)
+    {
+      SendTa250IdleProbeByte(configuration.CanAddresses.HotWater.BufferOperation, 1);
+    }
+    else if (phase30 == 23)
+    {
+      SendTa250IdleProbeByte(configuration.CanAddresses.HotWater.SetpointTemperature, GetTa250IdleHotWaterSetpointRaw());
+    }
+    else if (phase30 == 24)
+    {
+      uint8_t emptyPayload[1] = {0};
+      SendTa250IdleProbePayload(0x0F9, 0, emptyPayload);
+    }
+    else if (phase30 == 25)
+    {
+      SendTa250IdleProbeByte(configuration.CanAddresses.Heating.Operation, commandedValues.Heating.Active ? 1 : 0);
+    }
+    else if (phase30 % 5 == 0)
+    {
+      SendTa250IdleProbeByte(configuration.CanAddresses.Heating.FeedSetpoint, GetTa250IdleFeedSetpointRaw());
+    }
+  }
+#endif
+}
 void SendMessage(CANMessage msg)
 {
   (void)TrySendCanMessage(msg, true, false);

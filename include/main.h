@@ -43,6 +43,18 @@
 #define ALLOW_SHOWER_BOOST_WRITE 0
 #endif
 
+// Probe mode for testing whether the TA250's observed 0x0F9/DLC0 cadence
+// is enough to satisfy the boiler when the physical TA250 is disconnected.
+#ifndef ALLOW_TA250_HEARTBEAT_PROBE
+#define ALLOW_TA250_HEARTBEAT_PROBE 0
+#endif
+
+// Probe mode for replaying the observed TA250 minimum idle frame set while
+// deriving setpoints from the current desired state instead of fixed values.
+#ifndef ALLOW_TA250_IDLE_PROBE
+#define ALLOW_TA250_IDLE_PROBE 0
+#endif
+
 // Environment
 #ifndef ENV
 #define ENV "NOT_SET"
@@ -60,6 +72,8 @@
 
 extern void SendMessage(CANMessage msg);
 extern bool SendHotWaterSetpointMessage(int temperatureCelsius);
+extern bool SendTa250HeartbeatProbeMessage();
+extern void TickTa250IdleProbe();
 extern void SetDateTime();
 extern void Reboot();
 extern CANMessage PrepareMessage(uint32_t id, int length = 8);

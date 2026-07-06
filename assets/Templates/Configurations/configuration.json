@@ -64,13 +64,13 @@
                 "Economy": "0x253"
             },
             "HotWater": {
-                "SetpointTemperature": "0x203",
+                "SetpointTemperature": "0x255",
                 "MaxTemperature": "0x204",
                 "CurrentTemperature": "0x205",
-                "Now": "0x254",
-                "BufferOperation": "0x20B",
+                "Now": "0x20B",
+                "BufferOperation": "0x254",
                 "ContinousFlow": {
-                    "SetpointTemperature": "0x255"
+                    "SetpointTemperature": "0x203"
                 }
             },
             "MixedCircuit": {

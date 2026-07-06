@@ -248,13 +248,13 @@ Following the timestamp when the message has been received, you will find the ID
                 "Power": "0x251"
             },
             "HotWater": {
-                "SetpointTemperature": "0x203",
+                "SetpointTemperature": "0x255",
                 "MaxTemperature": "0x204",
                 "CurrentTemperature": "0x205",
-                "Now": "0x254",
-                "BufferOperation": "0x20B",
+                "Now": "0x20B",
+                "BufferOperation": "0x254",
                 "ContinousFlow": {
-                    "SetpointTemperature": "0x255"
+                    "SetpointTemperature": "0x203"
                 }
             },
             "MixedCircuit": {
@@ -294,13 +294,13 @@ Your CAN-Module might have a 8MHz or 16MHz oscillator (quartz) installed. Adjust
                 "Power": "0x251"
             },
             "HotWater": {
-                "SetpointTemperature": "0x203",
+                "SetpointTemperature": "0x255",
                 "MaxTemperature": "0x204",
                 "CurrentTemperature": "0x205",
-                "Now": "0x254",
-                "BufferOperation": "0x20B",
+                "Now": "0x20B",
+                "BufferOperation": "0x254",
                 "ContinousFlow": {
-                    "SetpointTemperature": "0x255"
+                    "SetpointTemperature": "0x203"
                 }
             },
             "MixedCircuit": {

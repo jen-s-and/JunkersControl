@@ -2,6 +2,47 @@ function _(el) {
     return document.getElementById(el);
 }
 
+const ThemeStorageKey = "cerasmarter-theme";
+
+function ensureThemeStyles() {
+    if (_("cerasmarter-theme-styles")) return;
+    const style = document.createElement("style");
+    style.id = "cerasmarter-theme-styles";
+    style.textContent = `body{transition:background-color .18s ease,color .18s ease}body.theme-light{background:#f6f8fb;color:#212529}body.theme-dark{background:#111827;color:#e5e7eb}body.theme-dark .navbar,body.theme-dark .dropdown-menu{background-color:#0b1220!important;border-color:#263244}body.theme-dark .dropdown-item,body.theme-dark .navbar-brand,body.theme-dark .nav-link{color:#e5e7eb!important}body.theme-dark .dropdown-item:hover,body.theme-dark .dropdown-item:focus{background-color:#1f2937}body.theme-dark .card,body.theme-dark .list-group-item,body.theme-dark .modal-content,body.theme-dark .border,body.theme-dark .alert-light{background-color:#172033!important;border-color:#2f3d52!important;color:#e5e7eb!important}body.theme-dark .table{color:#e5e7eb;border-color:#2f3d52}body.theme-dark .table>:not(caption)>*>*{background-color:#172033;border-color:#2f3d52;color:#e5e7eb}body.theme-dark .table-warning>*{background-color:#574111!important;color:#fff4cf!important}body.theme-dark .table-info>*{background-color:#113b54!important;color:#d7f1ff!important}body.theme-dark .bg-light,body.theme-dark .sticky-top.bg-light{background-color:#1f2937!important;color:#f3f4f6!important}body.theme-dark .form-control,body.theme-dark .form-select{background-color:#0f172a;border-color:#334155;color:#e5e7eb}body.theme-dark .text-muted,body.theme-dark .form-text{color:#a7b3c4!important}body.theme-dark code{color:#a7f3d0}.theme-toggle-label{min-width:3.2rem;color:#e5e7eb}`;
+    document.head.appendChild(style);
+}
+
+function getStoredTheme() {
+    const stored = localStorage.getItem(ThemeStorageKey);
+    if (stored === "dark" || stored === "light") return stored;
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function applyTheme(theme) {
+    ensureThemeStyles();
+    document.body.classList.toggle("theme-dark", theme === "dark");
+    document.body.classList.toggle("theme-light", theme !== "dark");
+    document.documentElement.setAttribute("data-theme", theme);
+    const toggle = _("theme-toggle");
+    const label = _("theme-toggle-label");
+    if (toggle) toggle.checked = theme === "dark";
+    if (label) label.textContent = theme === "dark" ? "Dark" : "Light";
+}
+
+function setTheme(theme) {
+    localStorage.setItem(ThemeStorageKey, theme);
+    applyTheme(theme);
+}
+
+function initThemeToggle() {
+    const toggle = _("theme-toggle");
+    if (!toggle) return;
+    toggle.checked = getStoredTheme() === "dark";
+    toggle.addEventListener("change", function () { setTheme(toggle.checked ? "dark" : "light"); });
+    applyTheme(getStoredTheme());
+}
+
+if (document.body) applyTheme(getStoredTheme());
 const CanErrorCodes = [
     "OK",
     "No MCP2515",
@@ -48,7 +89,7 @@ function loadNavigation() {
             } catch (error) {
                 console.log("Missing Nav-link to activate.");
             }
-            
+            initThemeToggle();
         }
     }
 
