@@ -15,9 +15,9 @@ struct CommandedValues
     struct Heating_
     {
         //-- Feed Temperature Setpoint
-        double FeedSetpoint = 40.00F;
+        double FeedSetpoint = 10.00F;
         //-- Calculated Feed Temperature
-        double CalculatedFeedSetpoint = 40.0F;
+        double CalculatedFeedSetpoint = 10.0F;
         //-- Minimum Feed Temperature
         double FeedMinimum = 10.0F;
         // Basepoint Temperature

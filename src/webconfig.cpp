@@ -1,4 +1,6 @@
 #include <webconfig.h>
+#include <mqtt.h>
+#include <heating.h>
 
 AsyncWebServer *server;
 AsyncEventSource *eventSource;
@@ -68,6 +70,9 @@ void ConfigureAndStartWebserver()
     server->on("/cananalyzer", HTTP_GET, [](AsyncWebServerRequest *request)
                { request->send(LittleFS, "/frontend/canalyzer.html", "text/html"); });
 
+    server->on("/heating", HTTP_GET, [](AsyncWebServerRequest *request)
+               { request->send(LittleFS, "/frontend/heating.html", "text/html"); });
+
     server->serveStatic("/", LittleFS, "/");
 
     // Finally, start the server
@@ -94,6 +99,9 @@ void configureGeneralApiEndpoints()
     // Info GET
     server->on("/api/info", HTTP_GET, [](AsyncWebServerRequest *request)
                { getSystemStatus(request); });
+
+    server->on("/api/heating/status", HTTP_GET, [](AsyncWebServerRequest *request)
+               { getHeatingStatus(request); });
 }
 
 #pragma region "General Config"
@@ -914,6 +922,75 @@ void onLedConfigReceive(AsyncWebServerRequest *request, JsonVariant &json)
 
 #pragma endregion
 
+void getHeatingStatus(AsyncWebServerRequest *request)
+{
+    StaticJsonDocument<1536> doc;
+
+    doc["mqttConnected"] = client.connected();
+    doc["parameterTopic"] = configuration.Mqtt.Topics.HeatingParameters;
+
+    JsonObject command = doc.createNestedObject("command");
+    command["active"] = commandedValues.Heating.Active;
+    command["feedSetpoint"] = commandedValues.Heating.FeedSetpoint;
+    command["calculatedFeedSetpoint"] = commandedValues.Heating.CalculatedFeedSetpoint;
+    command["minimumFeedTemperature"] = commandedValues.Heating.MinimumFeedTemperature;
+    command["basepointTemperature"] = commandedValues.Heating.BasepointTemperature;
+    command["endpointTemperature"] = commandedValues.Heating.EndpointTemperature;
+    command["auxiliaryTemperature"] = commandedValues.Heating.AuxiliaryTemperature;
+    command["ambientTemperature"] = commandedValues.Heating.AmbientTemperature;
+    command["targetAmbientTemperature"] = commandedValues.Heating.TargetAmbientTemperature;
+    command["feedAdaption"] = commandedValues.Heating.FeedAdaption;
+    command["overrideSetpoint"] = commandedValues.Heating.OverrideSetpoint;
+    command["dynamicAdaption"] = commandedValues.Heating.DynamicAdaption;
+    command["valveScaling"] = commandedValues.Heating.ValveScaling;
+    command["maxValveOpening"] = commandedValues.Heating.MaxValveOpening;
+    command["valveOpening"] = commandedValues.Heating.ValveOpening;
+    command["boost"] = commandedValues.Heating.Boost;
+    command["boostTimeLeft"] = commandedValues.Heating.BoostTimeCountdown;
+    command["fastHeatup"] = commandedValues.Heating.FastHeatup;
+
+    JsonObject current = doc.createNestedObject("current");
+    current["outsideTemperature"] = ceraValues.General.OutsideTemperature;
+    current["season"] = ceraValues.Heating.Season;
+    current["working"] = ceraValues.Heating.Active;
+    current["pump"] = ceraValues.Heating.PumpActive;
+    current["feedMaximum"] = ceraValues.Heating.FeedMaximum;
+    current["feedCurrent"] = ceraValues.Heating.FeedCurrent;
+    if (ceraValues.Heating.HasReceivedFeedSetpoint)
+    {
+        current["feedSetpointBus"] = ceraValues.Heating.FeedSetpoint;
+    }
+    else
+    {
+        current["feedSetpointBus"] = nullptr;
+    }
+    current["feedSetpointEffective"] = commandedValues.Heating.CalculatedFeedSetpoint;
+    current["feedMinimum"] = ceraValues.Heating.FeedMinimum;
+    current["heatingPower"] = ceraValues.Heating.HeatingPower;
+    current["flame"] = ceraValues.General.FlameLit;
+    current["error"] = ceraValues.General.Error;
+
+    JsonObject effective = doc.createNestedObject("effective");
+    effective["allowedBySeason"] = ceraValues.Heating.Season;
+    effective["requested"] = commandedValues.Heating.Active;
+    effective["canHeat"] = ceraValues.Heating.Season && commandedValues.Heating.Active;
+    effective["feedSetpoint"] = commandedValues.Heating.CalculatedFeedSetpoint;
+    effective["feedRaw"] = ConvertFeedTemperature(commandedValues.Heating.CalculatedFeedSetpoint);
+    if (!ceraValues.Heating.Season)
+    {
+        effective["blockedReasonCode"] = "seasonOff";
+    }
+    else if (!commandedValues.Heating.Active)
+    {
+        effective["blockedReasonCode"] = "notRequested";
+    }
+    else
+    {
+        effective["blockedReasonCode"] = "";
+    }
+
+    sendJson(doc, request);
+}
 void getSystemStatus(AsyncWebServerRequest *request)
 {
     StaticJsonDocument<1024> doc;

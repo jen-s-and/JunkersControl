@@ -29,7 +29,9 @@ struct CeraValues
     //-- Current Feed Temperature
     double FeedCurrent = 0.00F;
     //-- Feed Temperature Setpoint
-    double FeedSetpoint = 40.00F;
+    double FeedSetpoint = 10.00F;
+    //-- Whether a feed setpoint frame has been received from CAN since boot
+    bool HasReceivedFeedSetpoint = false;
     //-- Minimum Feed Temperature as reported by the boiler
     double FeedMinimum = 10.0F;
     //-- Max. possible water temperature -or- target temperature when running in heating Buffer mode
@@ -63,7 +65,7 @@ struct CeraValues
   struct HotWater_
   {
     //-- Setpoint (Target Temperature) for DHW
-    double SetPoint = 40.0F;
+    double SetPoint = 10.0F;
     //-- The currently reported temperature of the DHW circuit
     double TemperatureCurrent = 0.00F;
     //-- Whether this installation utilizes a buffer(or battery)

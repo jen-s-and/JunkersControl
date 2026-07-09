@@ -4,7 +4,7 @@
         <a class="navbar-brand" href="/">
             <!-- Icon created by Freepik -->
             <img src="/frontend/img/smart-heating.png" alt="Cerasmarter" width="30" height="24">
-            Cerasmarter        
+            Cerasmarter
         </a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText"
@@ -14,40 +14,47 @@
         <div class="collapse navbar-collapse" id="navbarText">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
-                    <a class="nav-link" href="/" id="home-link">Home</a>
+                    <a class="nav-link" href="/" id="home-link" data-i18n="nav.home">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/filemanager" id="filemanager-link">File Manager</a>
+                    <a class="nav-link" href="/heating" id="heating-link" data-i18n="nav.heating">Heating</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/update-firmware" id="update-firmware-link">Firmware Update</a>
+                    <a class="nav-link" href="/filemanager" id="filemanager-link" data-i18n="nav.fileManager">File Manager</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/update-firmware" id="update-firmware-link" data-i18n="nav.firmware">Firmware Update</a>
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button"
-                        data-bs-toggle="dropdown" aria-expanded="false">
+                        data-bs-toggle="dropdown" aria-expanded="false" data-i18n="nav.configuration">
                         Configuration
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                        <li><a class="dropdown-item" href="/wifi" id="wifi-link">Wifi</a></li>
-                        <li><a class="dropdown-item" href="/mqtt" id="mqtt-link">MQTT</a></li>
-                        <li><a class="dropdown-item" href="/general" id="general-link">General Settings</a></li>
-                        <li><a class="dropdown-item" href="/canbus" id="canbus-link">CAN-Bus</a></li>
-                        <li><a class="dropdown-item" href="/auxsensors" id="auxsensors-link">Temperature Sensors</a>
-                        </li>
-                        <li><a class="dropdown-item" href="/leds" id="leds-link">LEDs</a></li>
+                        <li><a class="dropdown-item" href="/wifi" id="wifi-link" data-i18n="nav.wifi">Wifi</a></li>
+                        <li><a class="dropdown-item" href="/mqtt" id="mqtt-link" data-i18n="nav.mqtt">MQTT</a></li>
+                        <li><a class="dropdown-item" href="/general" id="general-link" data-i18n="nav.general">General Settings</a></li>
+                        <li><a class="dropdown-item" href="/canbus" id="canbus-link" data-i18n="nav.canbus">CAN-Bus</a></li>
+                        <li><a class="dropdown-item" href="/auxsensors" id="auxsensors-link" data-i18n="nav.sensors">Temperature Sensors</a></li>
+                        <li><a class="dropdown-item" href="/leds" id="leds-link" data-i18n="nav.leds">LEDs</a></li>
                     </ul>
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarUtilDropdownMenuLink" role="button"
-                    data-bs-toggle="dropdown" aria-expanded="false">
+                    data-bs-toggle="dropdown" aria-expanded="false" data-i18n="nav.utilities">
                         Utilities
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarUtilDropdownMenuLink">
-                        <li><a class="dropdown-item" href="/cananalyzer" id="cananalyzer-link">CAN Message Analyzer</a></li>
+                        <li><a class="dropdown-item" href="/cananalyzer" id="cananalyzer-link" data-i18n="nav.canAnalyzer">CAN Message Analyzer</a></li>
                     </ul>
                 </li>
             </ul>
-            <div class="d-flex align-items-center gap-2 ms-lg-3 py-2 py-lg-0">
+            <div class="d-flex align-items-center gap-2 ms-lg-3 py-2 py-lg-0 flex-wrap">
+                <label class="small text-light" for="language-select" data-i18n="nav.language">Language</label>
+                <select class="form-select form-select-sm w-auto" id="language-select" aria-label="Language">
+                    <option value="en">EN</option>
+                    <option value="de">DE</option>
+                </select>
                 <i class="bi bi-sun text-warning"></i>
                 <div class="form-check form-switch m-0">
                     <input class="form-check-input" type="checkbox" role="switch" id="theme-toggle" aria-label="Toggle dark mode">

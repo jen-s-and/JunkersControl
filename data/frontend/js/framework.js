@@ -3,6 +3,340 @@ function _(el) {
 }
 
 const ThemeStorageKey = "cerasmarter-theme";
+const LanguageStorageKey = "cerasmarter-language";
+
+const CerasmarterTranslations = {
+    en: {
+        "nav.home": "Home",
+        "nav.heating": "Heating",
+        "nav.fileManager": "File Manager",
+        "nav.firmware": "Firmware Update",
+        "nav.configuration": "Configuration",
+        "nav.wifi": "Wifi",
+        "nav.mqtt": "MQTT",
+        "nav.general": "General Settings",
+        "nav.canbus": "CAN-Bus",
+        "nav.sensors": "Temperature Sensors",
+        "nav.leds": "LEDs",
+        "nav.utilities": "Utilities",
+        "nav.canAnalyzer": "CAN Message Analyzer",
+        "nav.language": "Language",
+        "theme.light": "Light",
+        "theme.dark": "Dark",
+        "common.saveSettings": "Save Settings",
+        "common.connected": "Connected",
+        "common.disconnected": "Disconnected",
+        "common.usedOf": "{used} of {total} used",
+        "common.on": "On",
+        "common.off": "Off",
+        "common.active": "Active",
+        "common.inactive": "Inactive",
+        "common.raw": "raw",
+        "common.noFrame": "No frame yet",
+        "common.received": "Received",
+        "common.sent": "Sent",
+        "common.at": "at",
+        "common.decodeError": "Decode error",
+        "home.systemStatus": "System Status",
+        "home.model": "Model",
+        "home.revision": "Revision",
+        "home.cores": "Cores",
+        "home.ram": "RAM",
+        "home.flash": "Flash",
+        "home.canModule": "CAN-Bus Module",
+        "home.canErrors": "CAN-Bus Errors",
+        "home.mqttStatus": "MQTT Status",
+        "home.reboot": "Reboot",
+        "home.invokingReboot": "Invoking reboot ...",
+        "general.title": "General Settings",
+        "general.heatingValues": "Enable processing and transmission of heating values",
+        "general.waterValues": "Enable processing and transmission of water values",
+        "general.auxValues": "Enable processing and transmission of external temperature sensors",
+        "general.overrideOutside": "Use your own outside temperature reference instead of the boiler sensor.",
+        "general.overrideOutsideHelp": "Uses AuxiliaryTemperature from the heating parameters topic instead of the boiler outside sensor.",
+        "general.timezone": "Timezone (NTP)",
+        "general.messageTimeout": "Message Timeout",
+        "general.messageTimeoutHelp": "Seconds before control over the heating is assumed when no other controller is detected on the bus.",
+        "general.debug": "Enable debug messages on the consoles",
+        "general.sniffing": "Output received CAN messages on the consoles.",
+        "general.noTimezoneSupport": "Your browser does not support Intl.supportedValuesOf().",
+        "can.options": "Options and Utilities",
+        "can.ignoreKnown": "Ignore known addresses",
+        "can.knownAddresses": "Known addresses",
+        "can.unknownAddresses": "Unknown addresses",
+        "can.title": "CAN Analyzer",
+        "can.subtitle": "Live view of raw frames and translated heating parameters",
+        "can.viewAria": "Analyzer view",
+        "can.translated": "Translated",
+        "can.rawData": "Raw data",
+        "can.group.general": "General",
+        "can.group.heating": "Heating",
+        "can.group.hotWater": "Hot water",
+        "can.group.mixedCircuit": "Mixed circuit",
+        "can.group.controller": "Controller",
+        "can.group.ta250": "TA250",
+        "can.label.flameStatus": "Burner flame",
+        "can.label.error": "Error code",
+        "can.label.dateTime": "Controller time",
+        "can.label.feedCurrent": "Flow current",
+        "can.label.feedMax": "Flow maximum",
+        "can.label.feedSetpoint": "Flow setpoint",
+        "can.label.outsideTemperature": "Outside temperature",
+        "can.label.heatingPump": "Heating pump",
+        "can.label.season": "Season mode",
+        "can.label.operation": "Heating operation",
+        "can.label.power": "Heating power",
+        "can.label.mode": "Control mode",
+        "can.label.economy": "Economy mode",
+        "can.label.hotWaterSetpoint": "Hot water setpoint",
+        "can.label.hotWaterMax": "Hot water maximum",
+        "can.label.hotWaterCurrent": "Hot water current",
+        "can.label.hotWaterNow": "Hot water now",
+        "can.label.bufferOperation": "Cylinder operation",
+        "can.label.continuousFlowSetpoint": "Flow heater setpoint",
+        "can.label.mixedPump": "Mixed circuit pump",
+        "can.label.mixedFeedSetpoint": "Mixed circuit flow setpoint",
+        "can.label.mixedFeedCurrent": "Mixed circuit flow current",
+        "can.label.mixedEconomy": "Mixed circuit economy mode",
+        "can.label.powerRating": "Power rating",
+        "can.label.ta250Heartbeat": "TA250 heartbeat",
+        "can.label.unknownStatus208": "Unknown status flag",
+        "can.value.weatherCompensated": "Weather-compensated",
+        "can.value.roomControlled": "Room-controlled",
+        "can.value.winter": "Winter",
+        "can.value.summer": "Summer",
+        "can.value.heartbeat": "Heartbeat",
+        "can.value.noError": "No error",
+        "can.value.canInterrupted": "A8 - CAN communication interrupted",
+        "can.value.day": "Day {day}",
+        "can.value.monday": "Monday",
+        "can.value.tuesday": "Tuesday",
+        "can.value.wednesday": "Wednesday",
+        "can.value.thursday": "Thursday",
+        "can.value.friday": "Friday",
+        "can.value.saturday": "Saturday",
+        "can.value.sunday": "Sunday",
+        "heating.title": "Heating Status",
+        "heating.subtitle": "Active ESP parameters, live values and calculated heating curve.",
+        "heating.curve": "Heating curve",
+        "heating.effectiveState": "Effective state",
+        "heating.receivedParameters": "Received parameters",
+        "heating.boilerBusCurrent": "Boiler / bus current",
+        "heating.mqttConnected": "MQTT connected",
+        "heating.mqttDisconnected": "MQTT disconnected",
+        "heating.statusUnavailable": "Status unavailable",
+        "heating.active": "active",
+        "heating.ready": "ready",
+        "heating.seasonOn": "heating season on",
+        "heating.seasonOff": "heating season off",
+        "heating.calculatedAt": "{feed} at {outside} outside",
+        "heating.enabled": "Heating enabled",
+        "heating.blocked": "Heating blocked",
+        "heating.allowed": "ESP may send according to heating curve.",
+        "heating.blocked.seasonOff": "Heating season is off.",
+        "heating.blocked.notRequested": "Heating curve is inactive or outside is above the heating limit.",
+        "heating.requested": "Requested",
+        "heating.seasonAllowed": "Season allowed",
+        "heating.feedEffective": "CAN 0x252 effective",
+        "heating.feed": "Flow",
+        "heating.outside": "Outside",
+        "bool.on": "On",
+        "bool.off": "Off"
+    },
+    de: {
+        "nav.home": "Start",
+        "nav.heating": "Heizung",
+        "nav.fileManager": "Dateimanager",
+        "nav.firmware": "Firmware-Update",
+        "nav.configuration": "Konfiguration",
+        "nav.wifi": "WLAN",
+        "nav.mqtt": "MQTT",
+        "nav.general": "Allgemein",
+        "nav.canbus": "CAN-Bus",
+        "nav.sensors": "Temperatursensoren",
+        "nav.leds": "LEDs",
+        "nav.utilities": "Werkzeuge",
+        "nav.canAnalyzer": "CAN-Analyzer",
+        "nav.language": "Sprache",
+        "theme.light": "Hell",
+        "theme.dark": "Dunkel",
+        "common.saveSettings": "Einstellungen speichern",
+        "common.connected": "Verbunden",
+        "common.disconnected": "Getrennt",
+        "common.usedOf": "{used} von {total} belegt",
+        "common.on": "Ein",
+        "common.off": "Aus",
+        "common.active": "Aktiv",
+        "common.inactive": "Inaktiv",
+        "common.raw": "Rohwert",
+        "common.noFrame": "Noch kein Frame",
+        "common.received": "Empfangen",
+        "common.sent": "Gesendet",
+        "common.at": "um",
+        "common.decodeError": "Dekodierfehler",
+        "home.systemStatus": "Systemstatus",
+        "home.model": "Modell",
+        "home.revision": "Revision",
+        "home.cores": "Kerne",
+        "home.ram": "RAM",
+        "home.flash": "Flash",
+        "home.canModule": "CAN-Bus-Modul",
+        "home.canErrors": "CAN-Bus-Fehler",
+        "home.mqttStatus": "MQTT-Status",
+        "home.reboot": "Neustart",
+        "home.invokingReboot": "Neustart wird ausgelöst ...",
+        "general.title": "Allgemeine Einstellungen",
+        "general.heatingValues": "Heizwerte verarbeiten und senden",
+        "general.waterValues": "Warmwasserwerte verarbeiten und senden",
+        "general.auxValues": "Externe Temperatursensoren verarbeiten und senden",
+        "general.overrideOutside": "Eigene Außenreferenz statt Kesselfühler verwenden.",
+        "general.overrideOutsideHelp": "Verwendet AuxiliaryTemperature aus dem Heizungsparameter-Topic statt des Außenfühlers der Heizung.",
+        "general.timezone": "Zeitzone (NTP)",
+        "general.messageTimeout": "Nachrichten-Timeout",
+        "general.messageTimeoutHelp": "Sekunden, bis die Steuerung übernommen wird, wenn kein anderer Regler auf dem Bus erkannt wurde.",
+        "general.debug": "Debugmeldungen auf den Konsolen ausgeben",
+        "general.sniffing": "Empfangene CAN-Nachrichten auf den Konsolen ausgeben.",
+        "general.noTimezoneSupport": "Dein Browser unterstützt Intl.supportedValuesOf() nicht.",
+        "can.options": "Optionen und Werkzeuge",
+        "can.ignoreKnown": "Bekannte Adressen ausblenden",
+        "can.knownAddresses": "Bekannte Adressen",
+        "can.unknownAddresses": "Unbekannte Adressen",
+        "can.title": "CAN-Analyzer",
+        "can.subtitle": "Liveansicht von Rohframes und übersetzten Heizungsparametern",
+        "can.viewAria": "Analyzer-Ansicht",
+        "can.translated": "Klartext",
+        "can.rawData": "Rohdaten",
+        "can.group.general": "Allgemein",
+        "can.group.heating": "Heizung",
+        "can.group.hotWater": "Warmwasser",
+        "can.group.mixedCircuit": "Mischkreis",
+        "can.group.controller": "Regler",
+        "can.group.ta250": "TA250",
+        "can.label.flameStatus": "Brennerflamme",
+        "can.label.error": "Fehlercode",
+        "can.label.dateTime": "Reglerzeit",
+        "can.label.feedCurrent": "Vorlauf ist",
+        "can.label.feedMax": "Vorlauf maximal",
+        "can.label.feedSetpoint": "Vorlauf soll",
+        "can.label.outsideTemperature": "Außentemperatur",
+        "can.label.heatingPump": "Heizkreispumpe",
+        "can.label.season": "Saisonmodus",
+        "can.label.operation": "Heizbetrieb",
+        "can.label.power": "Heizleistung",
+        "can.label.mode": "Regelart",
+        "can.label.economy": "Sparbetrieb",
+        "can.label.hotWaterSetpoint": "Warmwasser soll",
+        "can.label.hotWaterMax": "Warmwasser maximal",
+        "can.label.hotWaterCurrent": "Warmwasser ist",
+        "can.label.hotWaterNow": "Warmwasser sofort",
+        "can.label.bufferOperation": "Speicherbetrieb",
+        "can.label.continuousFlowSetpoint": "Durchlauf soll",
+        "can.label.mixedPump": "Mischkreispumpe",
+        "can.label.mixedFeedSetpoint": "Mischkreis Vorlauf soll",
+        "can.label.mixedFeedCurrent": "Mischkreis Vorlauf ist",
+        "can.label.mixedEconomy": "Mischkreis Sparbetrieb",
+        "can.label.powerRating": "Leistungskennung",
+        "can.label.ta250Heartbeat": "TA250-Lebenszeichen",
+        "can.label.unknownStatus208": "Unbekanntes Statusflag",
+        "can.value.weatherCompensated": "Witterungsgeführt",
+        "can.value.roomControlled": "Raumgeführt",
+        "can.value.winter": "Winter",
+        "can.value.summer": "Sommer",
+        "can.value.heartbeat": "Lebenszeichen",
+        "can.value.noError": "Kein Fehler",
+        "can.value.canInterrupted": "A8 - CAN-Kommunikation unterbrochen",
+        "can.value.day": "Tag {day}",
+        "can.value.monday": "Montag",
+        "can.value.tuesday": "Dienstag",
+        "can.value.wednesday": "Mittwoch",
+        "can.value.thursday": "Donnerstag",
+        "can.value.friday": "Freitag",
+        "can.value.saturday": "Samstag",
+        "can.value.sunday": "Sonntag",
+        "heating.title": "Heizungsstatus",
+        "heating.subtitle": "Aktive ESP-Parameter, Livewerte und berechnete Heizkurve.",
+        "heating.curve": "Heizkurve",
+        "heating.effectiveState": "Wirksamer Zustand",
+        "heating.receivedParameters": "Empfangene Parameter",
+        "heating.boilerBusCurrent": "Kessel / Bus aktuell",
+        "heating.mqttConnected": "MQTT verbunden",
+        "heating.mqttDisconnected": "MQTT getrennt",
+        "heating.statusUnavailable": "Status nicht erreichbar",
+        "heating.active": "aktiv",
+        "heating.ready": "bereit",
+        "heating.seasonOn": "Heizsaison an",
+        "heating.seasonOff": "Heizsaison aus",
+        "heating.calculatedAt": "{feed} bei {outside} außen",
+        "heating.enabled": "Heizen freigegeben",
+        "heating.blocked": "Heizen blockiert",
+        "heating.allowed": "ESP darf nach Heizkurve senden.",
+        "heating.blocked.seasonOff": "Heizsaison ist aus.",
+        "heating.blocked.notRequested": "Heizkurve ist inaktiv oder die Außentemperatur liegt über der Heizgrenze.",
+        "heating.requested": "Angefordert",
+        "heating.seasonAllowed": "Saison erlaubt",
+        "heating.feedEffective": "CAN 0x252 effektiv",
+        "heating.feed": "Vorlauf",
+        "heating.outside": "Außen",
+        "bool.on": "Ein",
+        "bool.off": "Aus"
+    }
+};
+function getStoredLanguage() {
+    const stored = localStorage.getItem(LanguageStorageKey);
+    if (stored === "de" || stored === "en") return stored;
+    return navigator.language && navigator.language.toLowerCase().startsWith("de") ? "de" : "en";
+}
+
+function translate(key, replacements) {
+    const lang = getStoredLanguage();
+    let text = (CerasmarterTranslations[lang] && CerasmarterTranslations[lang][key]) || CerasmarterTranslations.en[key] || key;
+    if (replacements) {
+        Object.keys(replacements).forEach((name) => {
+            text = text.replace(`{${name}}`, replacements[name]);
+        });
+    }
+    return text;
+}
+
+function translatePage() {
+    document.querySelectorAll("[data-i18n]").forEach((el) => {
+        el.textContent = translate(el.getAttribute("data-i18n"));
+    });
+    document.querySelectorAll("[data-i18n-title]").forEach((el) => {
+        el.setAttribute("title", translate(el.getAttribute("data-i18n-title")));
+    });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+        el.setAttribute("placeholder", translate(el.getAttribute("data-i18n-placeholder")));
+    });
+}
+
+function setLanguage(language) {
+    const lang = language === "de" ? "de" : "en";
+    localStorage.setItem(LanguageStorageKey, lang);
+    document.documentElement.setAttribute("lang", lang);
+    const select = _("language-select");
+    if (select) select.value = lang;
+    translatePage();
+    applyTheme(getStoredTheme());
+    window.dispatchEvent(new CustomEvent("cerasmarter:language-changed", { detail: { language: lang } }));
+}
+
+function initLanguageToggle() {
+    const select = _("language-select");
+    const lang = getStoredLanguage();
+    document.documentElement.setAttribute("lang", lang);
+    if (select) {
+        select.value = lang;
+        select.addEventListener("change", function () { setLanguage(select.value); });
+    }
+    translatePage();
+}
+
+window.CerasmarterI18n = {
+    t: translate,
+    getLanguage: getStoredLanguage,
+    setLanguage: setLanguage
+};
 
 function ensureThemeStyles() {
     if (_("cerasmarter-theme-styles")) return;
@@ -26,7 +360,7 @@ function applyTheme(theme) {
     const toggle = _("theme-toggle");
     const label = _("theme-toggle-label");
     if (toggle) toggle.checked = theme === "dark";
-    if (label) label.textContent = theme === "dark" ? "Dark" : "Light";
+    if (label) label.textContent = theme === "dark" ? translate("theme.dark") : translate("theme.light");
 }
 
 function setTheme(theme) {
@@ -90,6 +424,7 @@ function loadNavigation() {
                 console.log("Missing Nav-link to activate.");
             }
             initThemeToggle();
+            initLanguageToggle();
         }
     }
 
@@ -197,7 +532,7 @@ function serializeForm(formId) {
 }
 
 function rebootButton() {
-    _("statusdetails").innerHTML = "Invoking Reboot ...";
+    _("statusdetails").innerHTML = translate("home.invokingReboot");
     const xhr = new XMLHttpRequest();
     xhr.open("GET", "/reboot", true);
     xhr.send();

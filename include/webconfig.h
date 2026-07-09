@@ -30,6 +30,8 @@ extern void handleDoUpdate(AsyncWebServerRequest *request, const String& filenam
 
 extern void getSystemStatus(AsyncWebServerRequest *request);
 
+extern void getHeatingStatus(AsyncWebServerRequest *request);
+
 extern void onWifiConfigReceive(AsyncWebServerRequest *request, JsonVariant &json);
 
 extern void getWifiConfig(AsyncWebServerRequest *request);

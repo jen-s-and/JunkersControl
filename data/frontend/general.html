@@ -20,7 +20,7 @@
             </div>
             <div class="col-md-6">
                 <div class="row mt-5">
-                    <h3>General Settings</h3>
+                    <h3 data-i18n="general.title">General Settings</h3>
                 </div>
                 <div class="row">
                     <form id="general-form">
@@ -29,46 +29,45 @@
                             <div class="mb-3 row">
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" role="switch" id="heatingvalues">
-                                    <label class="form-check-label" for="heatingvalues">Enable processing and transmission of heating values</label>
+                                    <label class="form-check-label" for="heatingvalues" data-i18n="general.heatingValues">Enable processing and transmission of heating values</label>
                                 </div>
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" role="switch" id="watervalues">
-                                    <label class="form-check-label" for="watervalues">Enable processing and transmission of water values</label>
+                                    <label class="form-check-label" for="watervalues" data-i18n="general.waterValues">Enable processing and transmission of water values</label>
                                 </div>
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" role="switch" id="auxvalues">
-                                    <label class="form-check-label" for="auxvalues">Enable processing and transmission of external temperature sensors</label>
+                                    <label class="form-check-label" for="auxvalues" data-i18n="general.auxValues">Enable processing and transmission of external temperature sensors</label>
                                 </div>
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" role="switch" id="overrideot">
-                                    <label class="form-check-label" for="overrideot">Use your own outside temperature reference instead of that of the heating.</label>
-                                    <span id="overrideOtHelpBlock" class="form-text text-muted">This will use the value from 'AuxiliaryTemperature' found on the heating parameters topic 
-                                        instead of the readings from the thermistor that may or may not be attached to your heating.</span>
+                                    <label class="form-check-label" for="overrideot" data-i18n="general.overrideOutside">Use your own outside temperature reference instead of the boiler sensor.</label>
+                                    <span id="overrideOtHelpBlock" class="form-text text-muted" data-i18n="general.overrideOutsideHelp">Uses AuxiliaryTemperature from the heating parameters topic instead of the boiler outside sensor.</span>
                                 </div>
                             </div>
                             <div class="mb-3 row">
-                                <label class="col-sm-2 col-form-label" for="tz">Timezone (NTP)</label>
+                                <label class="col-sm-2 col-form-label" for="tz" data-i18n="general.timezone">Timezone (NTP)</label>
                                 <div class="col-sm-10">
                                     <select class="form-select" aria-label="Select Timezone" id="tz">
                                     </select>
                                 </div>
                             </div>
                             <div class="mb-3 row">
-                                <label class="col-sm-2 col-form-label" for="busmsgtimeout">Message Timeout</label>
+                                <label class="col-sm-2 col-form-label" for="busmsgtimeout" data-i18n="general.messageTimeout">Message Timeout</label>
                                 <div class="col-sm-10">
                                     <input id="busmsgtimeout" name="busmsgtimeout" placeholder="Default: 30" type="number"
                                         class="form-control" autocomplete="busmsgtimeout" value="30" required>
-                                        <span id="statusHelpBlock" class="form-text text-muted">Time in seconds before control over the heating is assumed when no other controllers have been detected on the bus.</span>
+                                        <span id="statusHelpBlock" class="form-text text-muted" data-i18n="general.messageTimeoutHelp">Seconds before control over the heating is assumed when no other controller is detected on the bus.</span>
                                 </div>
                             </div>
                             <div class="mb-3 row">
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" role="switch" id="debug">
-                                    <label class="form-check-label" for="debug">Enable debug messages on the consoles</label>
+                                    <label class="form-check-label" for="debug" data-i18n="general.debug">Enable debug messages on the consoles</label>
                                 </div>
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" role="switch" id="sniffing">
-                                    <label class="form-check-label" for="sniffing">Output received CAN messages on consoles.</label>
+                                    <label class="form-check-label" for="sniffing" data-i18n="general.sniffing">Output received CAN messages on the consoles.</label>
                                 </div>
                             </div>
                             <div class="mb-3 row" id="status">
@@ -79,7 +78,7 @@
                                     <button name="submit" type="submit" class="btn btn-primary" id="save-general">
                                         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"
                                         id="general-saving" hidden></span>
-                                        <span id="save-general-label">Save Settings</span>
+                                        <span id="save-general-label" data-i18n="common.saveSettings">Save Settings</span>
                                     </button>
                                 </div>
                             </div>
@@ -121,7 +120,7 @@
         function getTz() {
             let select = _("tz");
             if (!Intl.supportedValuesOf) {
-            let opt = new Option("Your browser does not support Intl.supportedValuesOf().", null, true, true);
+            let opt = new Option(window.CerasmarterI18n ? window.CerasmarterI18n.t("general.noTimezoneSupport") : "Your browser does not support Intl.supportedValuesOf().", null, true, true);
             opt.disabled = true;
             select.options.add(opt);
             } else {

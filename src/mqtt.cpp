@@ -22,7 +22,7 @@ static const int ShowerBoostMinTemperature = 10;
 static const int ShowerBoostMaxTemperature = 60;
 static const int ShowerBoostDefaultTemperature = 50;
 static const int ShowerBoostDefaultRestoreTemperature = 10;
-static const int ShowerBoostMaxDuration = 1800;
+static const int ShowerBoostMaxDuration = 3600;
 static const int ShowerBoostCommandIntervalMs = 5000;
 
 // \brief (Re)connect to MQTT broker
@@ -424,7 +424,7 @@ void callback(char *topic, byte *payload, unsigned int length)
     /*
     Example Json:
     {
-      "Setpoint": 40
+      "Setpoint": 10
     }
     */
 

@@ -286,6 +286,7 @@ void processCan()
     {
       temp = Message.data[0] / 2.0;
       ceraValues.Heating.FeedSetpoint = temp;
+      ceraValues.Heating.HasReceivedFeedSetpoint = true;
     }
 
     //[DHW] - [RC] - Setpoint water temperature

@@ -136,6 +136,19 @@ Now you can connect to the AP ("CERASMARTER" network by default) and modify/impo
 
 If MDNS is working properly on your end, you will be able to open the web UI using http://cerasmarter/
 
+## Jens' TA250/Cerasmarter Variant
+
+This fork contains a tested TA250-oriented configuration and web UI extension for a Bosch/Junkers Cerasmart setup. The goal is to keep the boiler bus stable while exposing the active control state clearly enough for Home Assistant driven operation.
+
+Implemented improvements include:
+- TA250 idle/heartbeat support: the firmware can simulate the observed TA250 heartbeat frame `0x0F9` / DLC0 and the minimal TA250 idle frame set used during local bus tests.
+- Stable hot-water control for the local TA250 mapping, including corrected hot-water CAN IDs and a safe reboot/default target of 10 °C instead of accidentally requesting 40 °C.
+- Heating status page in the ESP web UI at `/heating`, showing received MQTT parameters, current boiler/bus values, effective gating, and the calculated heating curve.
+- CAN Analyzer improvements with a translated clear-text view for known heating, hot-water and controller frames, including fixed cards for `0x20D`, `0x0F9` and `0x208`.
+- Global dark/light mode and English/German language switching in the ESP web UI.
+- Home Assistant oriented heating-curve workflow: parameters can be preloaded even while the boiler heating season is off; the ESP still gates actual heating output by the live boiler season state.
+
+The TA250-related behavior is installation-specific and should be validated on the local bus before using it as a general replacement for an attached room controller.
 ## Features
 
 ### MQTT

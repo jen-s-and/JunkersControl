@@ -23,7 +23,7 @@
     },
     "Features": {
         "HeatingParameters": true,
-        "WaterParameters": false,
+        "WaterParameters": true,
         "AuxiliaryValues": false,
         "OverrideOT": false
     },
@@ -32,7 +32,7 @@
     },
     "General": {
         "BusMessageTimeout": 30,
-        "Debug": false,
+        "Debug": true,
         "Sniffing": false
     },
     "HomeAssistant":

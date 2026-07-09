@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased - Jens TA250/Cerasmarter variant
+- Added ESP web UI language switching for English/German alongside the existing dark/light mode.
+- Added a dedicated Heating Status tab with active MQTT parameters, live boiler/bus values, effective heating gating and a calculated heating curve.
+- Improved the CAN Analyzer with clear-text translations for heating, hot-water and controller values, including `0x20D`, `0x0F9` and `0x208`.
+- Documented TA250 heartbeat/idle support. The firmware can simulate the observed TA250 `0x0F9` / DLC0 heartbeat used in local tests.
+- Kept hot-water restart defaults conservative by using a 10 °C setpoint instead of falling back to 40 °C.
+- Added Home Assistant oriented heating-curve handling where curve parameters can be preloaded while heating season is off; the ESP still blocks actual heating output until the boiler reports heating season active.
 ## v0.9.3
 Emergency fix for web UI: I forgot to commit the working version of the frontend pages so the forms actually work.
 

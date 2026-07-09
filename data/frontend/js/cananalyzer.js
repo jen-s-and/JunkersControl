@@ -11,7 +11,11 @@ let translatedDefinitions = {};
 let translatedState = {};
 
 const msgLog = _("can-msg");
-const weekdayNames = ["", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
+const weekdayKeys = ["", "can.value.monday", "can.value.tuesday", "can.value.wednesday", "can.value.thursday", "can.value.friday", "can.value.saturday", "can.value.sunday"];
+
+function tr(key, replacements) {
+    return window.CerasmarterI18n ? window.CerasmarterI18n.t(key, replacements) : key;
+}
 
 function normalizeCanId(value) {
     if (typeof value === "number") return `0x${decimalToHex(value, 3).toUpperCase()}`;
@@ -27,29 +31,29 @@ function definitionForPath(path) {
 
 function canDefinitionCatalog() {
     return {
-        "Controller.FlameStatus": {group: "Allgemein", label: "Brennerflamme", decoder: decodeBool("An", "Aus")},
-        "Controller.Error": {group: "Allgemein", label: "Fehlercode", decoder: decodeError},
-        "Controller.DateTime": {group: "Allgemein", label: "Reglerzeit", decoder: decodeDateTime},
-        "Heating.FeedCurrent": {group: "Heizung", label: "Vorlauf ist", decoder: decodeHalfStep},
-        "Heating.FeedMax": {group: "Heizung", label: "Vorlauf maximal", decoder: decodeHalfStep},
-        "Heating.FeedSetpoint": {group: "Heizung", label: "Vorlauf soll", decoder: decodeHalfStep},
-        "Heating.OutsideTemperature": {group: "Heizung", label: "Aussentemperatur", decoder: decodeOutsideTemperature},
-        "Heating.Pump": {group: "Heizung", label: "Heizkreispumpe", decoder: decodeBool("An", "Aus")},
-        "Heating.Season": {group: "Heizung", label: "Saisonmodus", decoder: decodeBool("Winter", "Sommer")},
-        "Heating.Operation": {group: "Heizung", label: "Heizbetrieb", decoder: decodeBool("An", "Aus")},
-        "Heating.Power": {group: "Heizung", label: "Heizleistung", decoder: decodePower},
-        "Heating.Mode": {group: "Heizung", label: "Regelart", decoder: decodeBool("Witterungsgefuehrt", "Raumgefuehrt")},
-        "Heating.Economy": {group: "Heizung", label: "Sparbetrieb", decoder: decodeBool("An", "Aus")},
-        "HotWater.SetpointTemperature": {group: "Warmwasser", label: "Warmwasser soll", decoder: decodeHalfStep},
-        "HotWater.MaxTemperature": {group: "Warmwasser", label: "Warmwasser maximal", decoder: decodeHalfStep},
-        "HotWater.CurrentTemperature": {group: "Warmwasser", label: "Warmwasser ist", decoder: decodeHalfStep},
-        "HotWater.Now": {group: "Warmwasser", label: "Warmwasser sofort", decoder: decodeBool("An", "Aus")},
-        "HotWater.BufferOperation": {group: "Warmwasser", label: "Speicherbetrieb", decoder: decodeBool("An", "Aus")},
-        "HotWater.ContinousFlow.SetpointTemperature": {group: "Warmwasser", label: "Durchlauf soll", decoder: decodeHalfStep},
-        "MixedCircuit.Pump": {group: "Mischkreis", label: "Mischkreispumpe", decoder: decodeBool("An", "Aus")},
-        "MixedCircuit.FeedSetpoint": {group: "Mischkreis", label: "Mischkreis Vorlauf soll", decoder: decodeHalfStep},
-        "MixedCircuit.FeedCurrent": {group: "Mischkreis", label: "Mischkreis Vorlauf ist", decoder: decodeHalfStep},
-        "MixedCircuit.Economy": {group: "Mischkreis", label: "Mischkreis Sparbetrieb", decoder: decodeBool("An", "Aus")}
+        "Controller.FlameStatus": {groupKey: "can.group.general", labelKey: "can.label.flameStatus", decoder: decodeBool("common.on", "common.off")},
+        "Controller.Error": {groupKey: "can.group.general", labelKey: "can.label.error", decoder: decodeError},
+        "Controller.DateTime": {groupKey: "can.group.general", labelKey: "can.label.dateTime", decoder: decodeDateTime},
+        "Heating.FeedCurrent": {groupKey: "can.group.heating", labelKey: "can.label.feedCurrent", decoder: decodeHalfStep},
+        "Heating.FeedMax": {groupKey: "can.group.heating", labelKey: "can.label.feedMax", decoder: decodeHalfStep},
+        "Heating.FeedSetpoint": {groupKey: "can.group.heating", labelKey: "can.label.feedSetpoint", decoder: decodeHalfStep},
+        "Heating.OutsideTemperature": {groupKey: "can.group.heating", labelKey: "can.label.outsideTemperature", decoder: decodeOutsideTemperature},
+        "Heating.Pump": {groupKey: "can.group.heating", labelKey: "can.label.heatingPump", decoder: decodeBool("common.on", "common.off")},
+        "Heating.Season": {groupKey: "can.group.heating", labelKey: "can.label.season", decoder: decodeBool("can.value.winter", "can.value.summer")},
+        "Heating.Operation": {groupKey: "can.group.heating", labelKey: "can.label.operation", decoder: decodeBool("common.on", "common.off")},
+        "Heating.Power": {groupKey: "can.group.heating", labelKey: "can.label.power", decoder: decodePower},
+        "Heating.Mode": {groupKey: "can.group.heating", labelKey: "can.label.mode", decoder: decodeBool("can.value.weatherCompensated", "can.value.roomControlled")},
+        "Heating.Economy": {groupKey: "can.group.heating", labelKey: "can.label.economy", decoder: decodeBool("common.on", "common.off")},
+        "HotWater.SetpointTemperature": {groupKey: "can.group.hotWater", labelKey: "can.label.hotWaterSetpoint", decoder: decodeHalfStep},
+        "HotWater.MaxTemperature": {groupKey: "can.group.hotWater", labelKey: "can.label.hotWaterMax", decoder: decodeHalfStep},
+        "HotWater.CurrentTemperature": {groupKey: "can.group.hotWater", labelKey: "can.label.hotWaterCurrent", decoder: decodeHalfStep},
+        "HotWater.Now": {groupKey: "can.group.hotWater", labelKey: "can.label.hotWaterNow", decoder: decodeBool("common.on", "common.off")},
+        "HotWater.BufferOperation": {groupKey: "can.group.hotWater", labelKey: "can.label.bufferOperation", decoder: decodeBool("common.on", "common.off")},
+        "HotWater.ContinousFlow.SetpointTemperature": {groupKey: "can.group.hotWater", labelKey: "can.label.continuousFlowSetpoint", decoder: decodeHalfStep},
+        "MixedCircuit.Pump": {groupKey: "can.group.mixedCircuit", labelKey: "can.label.mixedPump", decoder: decodeBool("common.on", "common.off")},
+        "MixedCircuit.FeedSetpoint": {groupKey: "can.group.mixedCircuit", labelKey: "can.label.mixedFeedSetpoint", decoder: decodeHalfStep},
+        "MixedCircuit.FeedCurrent": {groupKey: "can.group.mixedCircuit", labelKey: "can.label.mixedFeedCurrent", decoder: decodeHalfStep},
+        "MixedCircuit.Economy": {groupKey: "can.group.mixedCircuit", labelKey: "can.label.mixedEconomy", decoder: decodeBool("common.on", "common.off")}
     };
 }
 
@@ -62,23 +66,32 @@ async function loadKnownAddresses() {
         if (!value || typeof value !== "string" || !value.toLowerCase().startsWith("0x")) return;
         const normalizedValue = normalizeCanId(value);
         knownAddresses.push(normalizedValue);
-        knownAddressLabels[normalizedValue] = definitionForPath(e)?.label || e;
+        const definition = definitionForPath(e);
+        knownAddressLabels[normalizedValue] = definition ? definition.labelKey : e;
     });
     knownAddresses = [...new Set(knownAddresses.map(e => normalizeCanId(e)))].sort();
-    Object.keys(fixedCanDefinitions()).forEach(id => { const normalizedId = normalizeCanId(id); if (!knownAddresses.includes(normalizedId)) knownAddresses.push(normalizedId); knownAddressLabels[normalizedId] = fixedCanDefinitions()[id].label; });
-    knownAddresses.sort();
-    knownAddresses.forEach((e) => {
-        const label = knownAddressLabels[e] || e;
-        _("known-addresses").innerHTML += `<div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="${e.toLowerCase()}-enabled" checked><label class="form-check-label" for="${e.toLowerCase()}-enabled"><code>${e}</code> ${label}</label></div>`;
+    Object.keys(fixedCanDefinitions()).forEach(id => {
+        const normalizedId = normalizeCanId(id);
+        if (!knownAddresses.includes(normalizedId)) knownAddresses.push(normalizedId);
+        knownAddressLabels[normalizedId] = fixedCanDefinitions()[id].labelKey;
     });
+    knownAddresses.sort();
+    renderKnownAddresses();
     renderTranslatedParameters();
+}
+
+function renderKnownAddresses() {
+    _("known-addresses").innerHTML = knownAddresses.map((e) => {
+        const label = knownAddressLabels[e] ? tr(knownAddressLabels[e]) : e;
+        return `<div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="${e.toLowerCase()}-enabled" checked><label class="form-check-label" for="${e.toLowerCase()}-enabled"><code>${e}</code> ${label}</label></div>`;
+    }).join("");
 }
 
 function fixedCanDefinitions() {
     return {
-        "0x20D": {group: "Controller", label: "Leistungskennung", decoder: decodeKilowatt, path: "Fixed.PowerRating"},
-        "0x0F9": {group: "TA250", label: "Bedienteil-Heartbeat", decoder: decodeHeartbeat, path: "Fixed.Ta250Heartbeat"},
-        "0x208": {group: "Controller", label: "Statusflag unbekannt", decoder: decodeUnknownFlag, path: "Fixed.UnknownStatus208"}
+        "0x20D": {groupKey: "can.group.controller", labelKey: "can.label.powerRating", decoder: decodeKilowatt, path: "Fixed.PowerRating"},
+        "0x0F9": {groupKey: "can.group.ta250", labelKey: "can.label.ta250Heartbeat", decoder: decodeHeartbeat, path: "Fixed.Ta250Heartbeat"},
+        "0x208": {groupKey: "can.group.controller", labelKey: "can.label.unknownStatus208", decoder: decodeUnknownFlag, path: "Fixed.UnknownStatus208"}
     };
 }
 
@@ -98,6 +111,7 @@ function buildCanDefinitions(addresses) {
     });
     return result;
 }
+
 function formatRawBytes(data) {
     return data.map(e => `0x${decimalToHex(e, 2).toUpperCase()} (${e})`).join(" ");
 }
@@ -106,8 +120,8 @@ function firstByte(data) {
     return data.length ? Number(data[0]) : 0;
 }
 
-function decodeBool(onText, offText) {
-    return function (data) { return firstByte(data) ? onText : offText; }
+function decodeBool(onKey, offKey) {
+    return function (data) { return firstByte(data) ? tr(onKey) : tr(offKey); }
 }
 
 function decodeHalfStep(data) {
@@ -118,20 +132,21 @@ function decodePower(data) {
     return `${Math.round(firstByte(data) * 100 / 255)} %`;
 }
 
-
 function decodeKilowatt(data) {
     if (!data.length) return "--";
     return `${firstByte(data)} kW`;
 }
 
 function decodeHeartbeat(data) {
-    return data.length === 0 ? "Lebenszeichen" : formatRawBytes(data);
+    return data.length === 0 ? tr("can.value.heartbeat") : formatRawBytes(data);
 }
 
 function decodeUnknownFlag(data) {
+    const raw = firstByte(data);
     if (!data.length) return "--";
-    return firstByte(data) ? `Aktiv / raw ${firstByte(data)}` : "Aus / raw 0";
+    return raw ? `${tr("common.active")} / ${tr("common.raw")} ${raw}` : `${tr("common.off")} / ${tr("common.raw")} 0`;
 }
+
 function decodeOutsideTemperature(data) {
     if (data.length < 2) return "--";
     let raw = (data[0] << 8) | data[1];
@@ -141,14 +156,14 @@ function decodeOutsideTemperature(data) {
 
 function decodeDateTime(data) {
     if (data.length < 3) return "--";
-    const weekday = weekdayNames[data[0]] || `Tag ${data[0]}`;
+    const weekday = weekdayKeys[data[0]] ? tr(weekdayKeys[data[0]]) : tr("can.value.day", {day: data[0]});
     return `${weekday}, ${String(data[1]).padStart(2, "0")}:${String(data[2]).padStart(2, "0")}`;
 }
 
 function decodeError(data) {
     const value = firstByte(data);
-    if (value === 0) return "Kein Fehler";
-    if (value === 0xA8 || value === 168) return "A8 - CAN-Kommunikation unterbrochen";
+    if (value === 0) return tr("can.value.noError");
+    if (value === 0xA8 || value === 168) return tr("can.value.canInterrupted");
     return `0x${decimalToHex(value, 2).toUpperCase()} (${value})`;
 }
 
@@ -160,21 +175,23 @@ function updateTranslatedMessage(json, msgId) {
     try {
         value = definition.decoder(json.data);
     } catch (error) {
-        value = "Decode error";
+        value = tr("common.decodeError");
         console.error(`Error decoding ${id}: ${error}`);
     }
-    translatedState[id] = {...definition, value, raw: formatRawBytes(json.data), direction: json.rcv ? "Empfangen" : "Gesendet", timestamp: new Date().toLocaleTimeString()};
+    translatedState[id] = {...definition, value, raw: formatRawBytes(json.data), rcv: json.rcv, timestamp: new Date().toLocaleTimeString()};
     renderTranslatedParameters(id);
 }
 
 function renderTranslatedParameters(updatedId) {
     const target = _("translated-parameters");
     if (!target) return;
-    const definitions = Object.values(translatedDefinitions).sort((a, b) => `${a.group} ${a.label}`.localeCompare(`${b.group} ${b.label}`));
+    const definitions = Object.values(translatedDefinitions).sort((a, b) => `${tr(a.groupKey)} ${tr(a.labelKey)}`.localeCompare(`${tr(b.groupKey)} ${tr(b.labelKey)}`));
     target.innerHTML = definitions.map(def => {
         const state = translatedState[def.id] || {};
         const updatedClass = updatedId === def.id ? " updated" : "";
-        return `<div class="parameter-card${updatedClass}" id="param-${def.id.replace("0x", "")}"><div class="d-flex justify-content-between align-items-start gap-2"><div><div class="text-muted small">${def.group}</div><div class="fw-semibold">${def.label}</div></div><code>${def.id}</code></div><div class="parameter-value mt-2">${state.value || "--"}</div><div class="small text-muted mt-2">${state.direction || "Noch kein Frame"}${state.timestamp ? " um " + state.timestamp : ""}</div><div class="small mt-1"><code>${state.raw || ""}</code></div></div>`;
+        const direction = state.timestamp ? (state.rcv ? tr("common.received") : tr("common.sent")) : tr("common.noFrame");
+        const timestamp = state.timestamp ? ` ${tr("common.at")} ${state.timestamp}` : "";
+        return `<div class="parameter-card${updatedClass}" id="param-${def.id.replace("0x", "")}"><div class="d-flex justify-content-between align-items-start gap-2"><div><div class="text-muted small">${tr(def.groupKey)}</div><div class="fw-semibold">${tr(def.labelKey)}</div></div><code>${def.id}</code></div><div class="parameter-value mt-2">${state.value || "--"}</div><div class="small text-muted mt-2">${direction}${timestamp}</div><div class="small mt-1"><code>${state.raw || ""}</code></div></div>`;
     }).join("");
 }
 
@@ -194,6 +211,7 @@ function onSwitchAllAddresses() {
         if (sw) sw.checked = !_("ignoreKnown").checked;
     });
 }
+
 function addToKnownAddress(id) {
     const msgId = `0x${id.toUpperCase()}`;
     const found = unknownAddresses.findIndex((e) => e === msgId);
@@ -287,3 +305,14 @@ function switchAnalyzerView() {
 _("view-translated").addEventListener("change", switchAnalyzerView);
 _("view-raw").addEventListener("change", switchAnalyzerView);
 _("ignoreKnown").addEventListener("change", onSwitchAllAddresses);
+window.addEventListener("cerasmarter:language-changed", () => {
+    Object.keys(translatedState).forEach((id) => {
+        const state = translatedState[id];
+        const rawBytes = state.raw ? state.raw.match(/\((\d+)\)/g) : null;
+        if (!rawBytes || !translatedDefinitions[id]) return;
+        const data = rawBytes.map((entry) => Number(entry.replace(/[()]/g, "")));
+        state.value = translatedDefinitions[id].decoder(data);
+    });
+    renderKnownAddresses();
+    renderTranslatedParameters();
+});
